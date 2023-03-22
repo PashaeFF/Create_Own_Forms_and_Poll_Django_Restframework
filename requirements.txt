@@ -1,0 +1,10 @@
+django
+djangorestframework
+Pillow
+XlsxWriter
+django-rest-swagger
+pyyaml
+drf-yasg
+django-rest-registration
+jwt
+django-cors-headers
