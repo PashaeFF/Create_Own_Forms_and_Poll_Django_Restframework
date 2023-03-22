@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'rest_framework', # new
     'own_forms', # new
     'auth2', #new
+    'pull', #new
     'rest_registration', #new
     'corsheaders',
 ]
