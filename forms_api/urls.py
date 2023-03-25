@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('forms/', include('own_forms.urls')),
     path('auth2/', include('auth2.urls')),
+    path('pull/', include('pull.urls')),
     path('', schema_view.with_ui('swagger', 
                                 cache_timeout=0), name='schema-swagger-ui'),
 ]

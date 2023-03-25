@@ -16,7 +16,7 @@ class Form(models.Model):
         db_table = "own_forms"
 
     def __str__(self):
-        return f'Email: {self.email} \nURL: {self.url} \nFullname: {self.fullname} \nForm name: {self.form_name} \nForm values: {self.values}'
+        return f'URL: {self.url} \nForm name: {self.form_name} \n'
 
 
 class FilledForms(models.Model):
