@@ -38,7 +38,9 @@ class CreateForm(APIView):
                 if check_url:
                     return Response({'error':'Url is available'}, status=status.HTTP_409_CONFLICT)
                 else:
-                    new_form = Form.objects.create(owner_id_id=user.id, url=form['url'], form_name=form['form_name'])
+                    new_form = Form.objects.create(owner_id_id=user.id,
+                                                   url=form['url'],
+                                                   form_name=form['form_name'])
                     new_form.save()
                     return Response({'created':{
                                     'Email':user.email,

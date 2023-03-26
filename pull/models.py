@@ -18,3 +18,13 @@ class Pull(models.Model):
     def __str__(self):
         return f'Pull Name: {self.pull_name}'
 
+
+class PullAnswers(models.Model):
+    person_id = models.ForeignKey(User, verbose_name="user_id", on_delete=models.CASCADE)
+    pull_id = models.ForeignKey(Pull, verbose_name="pull", on_delete=models.CASCADE)
+    answers = models.JSONField(default=dict)
+    counter = models.IntegerField(default=0)
+    created_at = models.DateTimeField(default=now)
+
+    class Meta:
+        db_table = "pull_answers"

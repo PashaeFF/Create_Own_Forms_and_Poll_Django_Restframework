@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import Pull, CreateQuestionnaire
+from .views import Pulls, GetPull, CreateQuestionnaire
 
 urlpatterns = [
-    path('', Pull.as_view()),
+    path('', Pulls.as_view()),
     path('create_questionnaire', CreateQuestionnaire.as_view()),
+    path('create_questionnaire/<int:pk>', GetPull.as_view()),
 ]
