@@ -9,3 +9,7 @@ class CreatePullSerializer(serializers.Serializer):
 
     class Meta:
         model = Pull
+
+
+class AnswerSerializer(serializers.Serializer):
+    answer = serializers.ListField()

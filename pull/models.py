@@ -28,3 +28,6 @@ class PullAnswers(models.Model):
 
     class Meta:
         db_table = "pull_answers"
+    
+    def __str__(self):
+        return f'Answer: {self.answers}'

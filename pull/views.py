@@ -1,7 +1,7 @@
 from rest_framework.decorators import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import CreatePullSerializer
+from .serializers import CreatePullSerializer, AnswerSerializer
 from drf_yasg.utils import swagger_auto_schema
 from own_forms.utils.check_auth import authorization
 from auth2.models import User
@@ -32,13 +32,22 @@ class GetPull(APIView):
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
     
 
-    @swagger_auto_schema(operation_id="Post Questionnarie", tags=['Pull'])
+    @swagger_auto_schema(operation_id="Post Questionnarie", tags=['Pull'], request_body=AnswerSerializer)
     def post(self, request, pk):
         if authorization(request):
             user = User.objects.filter(id=authorization(request)['id']).first()
             get_pull = Pull.objects.filter(id=pk).first()
             if get_pull:
                 form = request.data
+                for e in form['answer']:
+                    if e not in get_pull.answers.values():
+                        return Response({'error':'Something went wrong'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
+                context = {
+                    'Pull name':get_pull.pull_name,
+                    'Answers':get_pull.answers,
+                    'Your Answer':form['answer']
+                }
+                return Response(context, status=status.HTTP_201_CREATED)
             else:
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
             
