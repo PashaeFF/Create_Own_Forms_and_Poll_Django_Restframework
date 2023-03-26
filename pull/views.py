@@ -22,6 +22,7 @@ class GetPull(APIView):
             get_pull = Pull.objects.filter(id=pk).first()
             if get_pull:
                 pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
+                check_user = PullAnswers.objects.filter(person_id_id=authorization(request)['id']).first()
                 serializer = ViewAnswerSerializer(pull_answers, many=True)
                 pull_context = {
                         'id':get_pull.id,
@@ -30,6 +31,12 @@ class GetPull(APIView):
                         'More_answers':get_pull.more_answers,
                         'Answers':get_pull.answers
                     }
+                if check_user:
+                    return Response({
+                                'pull_context':pull_context, 
+                                'data':serializer.data
+                                
+                                },status=status.HTTP_200_OK)
                 return Response({
                                 'pull_context':pull_context, 
                                 'data':serializer.data
@@ -43,9 +50,11 @@ class GetPull(APIView):
         if authorization(request):
             user = User.objects.filter(id=authorization(request)['id']).first()
             get_pull = Pull.objects.filter(id=pk).first()
+            check_user = PullAnswers.objects.filter(person_id_id=authorization(request)['id']).first()
+            if check_user:
+                return Response({'message':'You have participated in the survey'})
             if get_pull:
                 form = request.data
-
                 for e in form['answer']:
                     if get_pull.more_answers == False and len(form['answer']) > 1:
                         return Response({'error':'This question can have only 1 answer'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
