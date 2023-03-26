@@ -13,3 +13,6 @@ class CreatePullSerializer(serializers.Serializer):
 
 class AnswerSerializer(serializers.Serializer):
     answer = serializers.ListField()
+
+class ViewAnswerSerializer(serializers.Serializer):
+    answers = serializers.ListField()

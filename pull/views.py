@@ -1,11 +1,11 @@
 from rest_framework.decorators import APIView
 from rest_framework import status
 from rest_framework.response import Response
-from .serializers import CreatePullSerializer, AnswerSerializer
+from .serializers import CreatePullSerializer, AnswerSerializer,ViewAnswerSerializer
 from drf_yasg.utils import swagger_auto_schema
 from own_forms.utils.check_auth import authorization
 from auth2.models import User
-from .models import Pull
+from .models import Pull, PullAnswers
 
 
 class Pulls(APIView):
@@ -21,13 +21,19 @@ class GetPull(APIView):
         if authorization(request):
             get_pull = Pull.objects.filter(id=pk).first()
             if get_pull:
+                pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
+                serializer = ViewAnswerSerializer(pull_answers, many=True)
+                pull_context = {
+                        'id':get_pull.id,
+                        'Pull name':get_pull.pull_name,
+                        'Anonimouse':get_pull.anonimouse,
+                        'More_answers':get_pull.more_answers,
+                        'Answers':get_pull.answers
+                    }
                 return Response({
-                            'id':get_pull.id,
-                            'Pull name':get_pull.pull_name,
-                            'Anonimouse':get_pull.anonimouse,
-                            'More_answers':get_pull.more_answers,
-                            'Answers':get_pull.answers
-                            }, status=status.HTTP_200_OK)
+                                'pull_context':pull_context, 
+                                'data':serializer.data
+                                },status=status.HTTP_200_OK)
             else:
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
     
@@ -39,7 +45,10 @@ class GetPull(APIView):
             get_pull = Pull.objects.filter(id=pk).first()
             if get_pull:
                 form = request.data
+
                 for e in form['answer']:
+                    if get_pull.more_answers == False and len(form['answer']) > 1:
+                        return Response({'error':'This question can have only 1 answer'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
                     if e not in get_pull.answers.values():
                         return Response({'error':'Something went wrong'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
                 context = {
@@ -47,9 +56,28 @@ class GetPull(APIView):
                     'Answers':get_pull.answers,
                     'Your Answer':form['answer']
                 }
+                new_answer = PullAnswers.objects.create(person_id_id=user.id,
+                                                        pull_id_id=get_pull.id,
+                                                        answers=form['answer'],
+                                                        )
+                new_answer.save()
                 return Response(context, status=status.HTTP_201_CREATED)
             else:
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
+            
+
+    @swagger_auto_schema(operation_id="Delete Pull", tags=['Pull'])
+    def delete(self, request, pk):
+        if authorization(request):
+            user = User.objects.filter(id=authorization(request)['id']).first()
+            get_pull = Pull.objects.filter(id=pk).first()
+            if get_pull is None:
+                return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
+            if get_pull.owner_id_id == user.id:
+                get_pull.delete()
+                return Response({'message':f'{get_pull.pull_name} deleted'})
+            else:
+                return Response({"error":"You don't have permission"})
             
 
 class CreateQuestionnaire(APIView):
@@ -67,6 +95,13 @@ class CreateQuestionnaire(APIView):
                     request_keys.append(k)
                 if len(form_keys) != len(request_keys):
                     return Response({'message':'Something went wrong'}, status=status.HTTP_203_NON_AUTHORITATIVE_INFORMATION)
+                check_unique_answer = []
+                for answer in request.data['answers'].values():
+                    if answer in check_unique_answer:
+                        return Response({'error':f'The answer "{answer}" are repeated'}, status=status.HTTP_200_OK)
+                    check_unique_answer.append(answer)
+                if len(check_unique_answer) > 10:
+                    return Response({'error':'I can post a maximum of 10 answers'}, status=status.HTTP_200_OK)
                 check_pull_name = Pull.objects.filter(pull_name=form['pull_name']).first()
                 if check_pull_name:
                     return Response({"message":f"Form name '{form['pull_name']}' is available"})
@@ -81,7 +116,8 @@ class CreateQuestionnaire(APIView):
                                     'Owner':user.email,
                                     'Pull name':form['pull_name'],
                                     'Anonimouse':form['anonimouse'],
-                                    'More Answers':form['more_answers']
+                                    'More Answers':form['more_answers'],
+                                    'Answers':form['answers']
 
                                 }}, status=status.HTTP_201_CREATED)
             else:
