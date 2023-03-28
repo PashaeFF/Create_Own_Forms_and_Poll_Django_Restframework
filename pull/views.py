@@ -6,6 +6,7 @@ from drf_yasg.utils import swagger_auto_schema
 from own_forms.utils.check_auth import authorization
 from auth2.models import User
 from .models import Pull, PullAnswers
+from .utils.helper import return_count
 
 
 class Pulls(APIView):
@@ -24,23 +25,22 @@ class GetPull(APIView):
                 pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
                 check_user = PullAnswers.objects.filter(person_id_id=authorization(request)['id']).first()
                 serializer = ViewAnswerSerializer(pull_answers, many=True)
+                
                 pull_context = {
                         'id':get_pull.id,
                         'Pull name':get_pull.pull_name,
                         'Anonimouse':get_pull.anonimouse,
                         'More_answers':get_pull.more_answers,
-                        'Answers':get_pull.answers
+                        'Answers':return_count(get_pull)
                     }
                 if check_user:
                     return Response({
-                                'pull_context':pull_context, 
-                                'data':serializer.data
-                                
-                                },status=status.HTTP_200_OK)
+                                        'pull_context':pull_context, 
+                                    }, status=status.HTTP_200_OK)
                 return Response({
-                                'pull_context':pull_context, 
-                                'data':serializer.data
-                                },status=status.HTTP_200_OK)
+                                    'pull_context':pull_context, 
+                                    'data':serializer.data
+                                }, status=status.HTTP_200_OK)
             else:
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
     
@@ -50,26 +50,31 @@ class GetPull(APIView):
         if authorization(request):
             user = User.objects.filter(id=authorization(request)['id']).first()
             get_pull = Pull.objects.filter(id=pk).first()
-            check_user = PullAnswers.objects.filter(person_id_id=authorization(request)['id']).first()
-            if check_user:
-                return Response({'message':'You have participated in the survey'})
             if get_pull:
+                pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
+                check_user = PullAnswers.objects.filter(pull_id_id=get_pull.id,person_id_id=authorization(request)['id']).first()
+                if check_user:
+                    return Response({'message':f'You have participated in the survey. Total survey participants: {len(pull_answers)}'})
                 form = request.data
                 for e in form['answer']:
                     if get_pull.more_answers == False and len(form['answer']) > 1:
                         return Response({'error':'This question can have only 1 answer'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
                     if e not in get_pull.answers.values():
-                        return Response({'error':'Something went wrong'}, status=status.HTTP_405_METHOD_NOT_ALLOWED)
-                context = {
-                    'Pull name':get_pull.pull_name,
-                    'Answers':get_pull.answers,
-                    'Your Answer':form['answer']
-                }
+                        return Response({'error':'Something went wrong'}, status=status.HTTP_405_METHOD_NOT_ALLOWED) 
                 new_answer = PullAnswers.objects.create(person_id_id=user.id,
                                                         pull_id_id=get_pull.id,
-                                                        answers=form['answer'],
-                                                        )
+                                                        answers=form['answer'])
+                if get_pull.anonimouse == True:
+                    if user.id == get_pull.owner_id_id:
+                        pass
+                    else:
+                        return Response({'message':f'Thank you for participating in the survey.'}, status=status.HTTP_201_CREATED)
                 new_answer.save()
+                context = {
+                    'Pull name':get_pull.pull_name,
+                    'Your Answer':return_count(get_pull),
+                    'Total survey participants':{len(pull_answers)}
+                }
                 return Response(context, status=status.HTTP_201_CREATED)
             else:
                 return Response({'message':'Pull not found'}, status=status.HTTP_200_OK)
@@ -130,6 +135,4 @@ class CreateQuestionnaire(APIView):
 
                                 }}, status=status.HTTP_201_CREATED)
             else:
-                return Response({"error":"You don't have permission"})
-            
-    
+                return Response({"error":"You don't have permission"}) 

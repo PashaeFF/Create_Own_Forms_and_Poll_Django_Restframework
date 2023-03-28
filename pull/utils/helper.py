@@ -1,6 +1,6 @@
 from rest_framework import status
 from rest_framework.response import Response
-from ..models import Pull
+from ..models import Pull, PullAnswers
 
 
 def check_errors(request, form):
@@ -23,3 +23,23 @@ def check_errors(request, form):
     print(">>>>>", check_pull_name)
     if check_pull_name:
         return Response({"message":f"Form name '{form['pull_name']}' is available"})
+    
+
+def return_count(get_pull):
+    pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
+    pull_length = len(pull_answers)
+    count = 1
+    my_dict= {}
+    for e in get_pull.answers.values():
+        for i in pull_answers.values():
+            for j in i['answers']:
+                if e == j:
+                    if e in my_dict.keys():
+                        my_dict[e].update({'answer':e, 'count':my_dict[e]['count']+1})
+                    else:
+                        my_dict[e] = {'answer':e, 'count':count}
+    return my_dict
+
+
+def check_anonimouse():
+    return ''
