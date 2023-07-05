@@ -1,10 +1,10 @@
 from rest_framework import status
 from rest_framework.response import Response
-from ..models import Pull, PullAnswers
+from ..models import Poll, PollAnswers
 
 
 def check_errors(request, form):
-    form_keys = ['pull_name','answers','anonimouse','more_answers']
+    form_keys = ['poll_name','answers','anonimouse','more_answers']
     request_keys = []
     for k in form.keys():
         if k not in form_keys:
@@ -19,19 +19,19 @@ def check_errors(request, form):
         check_unique_answer.append(answer)
     if len(check_unique_answer) > 10:
         return Response({'error':'I can post a maximum of 10 answers'}, status=status.HTTP_200_OK)
-    check_pull_name = Pull.objects.filter(pull_name=form['pull_name']).first()
-    print(">>>>>", check_pull_name)
-    if check_pull_name:
-        return Response({"message":f"Form name '{form['pull_name']}' is available"})
+    check_poll_name = Poll.objects.filter(poll_name=form['poll_name']).first()
+    print(">>>>>", check_poll_name)
+    if check_poll_name:
+        return Response({"message":f"Form name '{form['poll_name']}' is available"})
     
 
-def return_count(get_pull):
-    pull_answers = PullAnswers.objects.filter(pull_id_id=get_pull.id).all()
-    pull_length = len(pull_answers)
+def return_count(get_poll):
+    poll_answers = PollAnswers.objects.filter(poll_id_id=get_poll.id).all()
+    poll_length = len(poll_answers)
     count = 1
     my_dict= {}
-    for e in get_pull.answers.values():
-        for i in pull_answers.values():
+    for e in get_poll.answers.values():
+        for i in poll_answers.values():
             for j in i['answers']:
                 if e == j:
                     if e in my_dict.keys():

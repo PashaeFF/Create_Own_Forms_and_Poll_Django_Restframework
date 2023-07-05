@@ -1,14 +1,14 @@
 from rest_framework import serializers
-from .models import Pull
+from .models import Poll
 
-class CreatePullSerializer(serializers.Serializer):
-    pull_name = serializers.CharField(max_length=250)
+class CreatePollSerializer(serializers.Serializer):
+    poll_name = serializers.CharField(max_length=250)
     answers = serializers.DictField()
     anonimouse = serializers.BooleanField()
     more_answers = serializers.BooleanField()
 
     class Meta:
-        model = Pull
+        model = Poll
 
 
 class AnswerSerializer(serializers.Serializer):
